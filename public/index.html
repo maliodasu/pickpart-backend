@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PickPart Backend Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.03); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-zinc-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-slate-800/80 backdrop-blur-xl border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden p-8 text-center animate-pulse-slow">
+        
+        <!-- Status Icon -->
+        <div class="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+            <div class="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping"></div>
+            <div class="relative w-24 h-24 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <i class="fa-solid fa-check text-5xl text-white"></i>
+            </div>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <h1 class="text-2xl font-bold tracking-tight mb-2">PickPart Backend Server</h1>
+        <p class="text-emerald-400 font-medium text-sm mb-6 flex items-center justify-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            System Running Smoothly & Good
+        </p>
+
+        <!-- Info Cards -->
+        <div class="space-y-3 text-left bg-slate-900/50 p-4 rounded-xl border border-slate-700/40 mb-6 text-sm">
+            <div class="flex justify-between items-center py-1 border-b border-slate-800">
+                <span class="text-slate-400"><i class="fa-solid fa-server mr-2 text-indigo-400"></i>Status</span>
+                <span class="text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full text-xs">ONLINE (200 OK)</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-800">
+                <span class="text-slate-400"><i class="fa-solid fa-clock mr-2 text-amber-400"></i>Uptime</span>
+                <span id="uptime" class="font-mono text-slate-200">00:00:00</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-800">
+                <span class="text-slate-400"><i class="fa-solid fa-network-wired mr-2 text-blue-400"></i>Environment</span>
+                <span class="font-mono text-slate-200">Node.js / Express</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+                <span class="text-slate-400"><i class="fa-solid fa-calendar-days mr-2 text-purple-400"></i>Server Time</span>
+                <span id="server-time" class="font-mono text-xs text-slate-300">-</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+            <button onclick="checkHealth()" class="flex-1 bg-slate-700 hover:bg-slate-600 active:scale-95 transition text-slate-200 font-medium py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-rotate"></i> Refresh Check
+            </button>
+            <a href="/api/config/ip" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition text-white font-medium py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow shadow-emerald-600/30">
+                <i class="fa-solid fa-terminal"></i> API Info
+            </a>
+        </div>
+
+        <div class="mt-6 text-xs text-slate-500">
+            PickPart Inventory & Warehouse Management System
+        </div>
+    </div>
+
+    <script>
+        let serverStartTime = Date.now();
+
+        async function fetchServerStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                if (data.success && data.serverStartTime) {
+                    serverStartTime = data.serverStartTime;
+                }
+            } catch (e) {
+                // fallback to client time if fetch fails
+            }
+        }
+
+        fetchServerStatus();
+
+        function updateUptime() {
+            const diff = Math.max(0, Math.floor((Date.now() - serverStartTime) / 1000));
+            const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const seconds = String(diff % 60).padStart(2, '0');
+            document.getElementById('uptime').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('server-time').textContent = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        }
+
+        setInterval(updateUptime, 1000);
+        setInterval(updateTime, 1000);
+        updateUptime();
+        updateTime();
+
+        async function checkHealth() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('✅ Backend Server is healthy and running!\nUptime: ' + document.getElementById('uptime').textContent);
+                } else {
+                    alert('⚠️ Server responded with status: ' + res.status);
+                }
+            } catch (err) {
+                alert('❌ Error connecting to server!');
+            }
+        }
+    </script>
+</body>
+</html>
